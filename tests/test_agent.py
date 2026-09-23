@@ -2,6 +2,7 @@ from typing import Any
 
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage
+from langchain_core.tools import BaseTool
 
 from supply_risk.agent import Request, build_subagents, run
 from supply_risk.prompts import DIMENSIONS
@@ -27,15 +28,25 @@ def _call(name: str, args: dict, id: str) -> AIMessage:
 
 def test_subagents_roles_models_and_tools():
     specs = {s["name"]: s for s in build_subagents(_models(), FakeTavily())}
-    assert list(specs) == ["entity-resolver", *(f"{k}-researcher" for k in DIMENSIONS), "critic"]
+    assert list(specs) == ["entity-resolver", *(f"{k}-researcher" for k in DIMENSIONS), *(f"{k}-critic" for k in DIMENSIONS)]
     assert specs["entity-resolver"]["model"].label == "entity"  # type: ignore[union-attr]
-    assert specs["critic"]["model"].label == "critic"  # type: ignore[union-attr]
+    assert specs["cyber-critic"]["model"].label == "critic"  # type: ignore[union-attr]
     names = {n: {t.name for t in s["tools"]} for n, s in specs.items()}  # type: ignore[union-attr]
     assert "ransomware_victims" in names["cyber-researcher"]
     assert {"opensanctions_search", "worldbank_governance"} <= names["geopolitical-researcher"]
     assert "stock_financials" in names["financial-researcher"]
     assert "gleif_search" in names["entity-resolver"]
-    assert names["critic"] == {"extract_page"}
+    assert names["cyber-critic"] == {"extract_page"}
+
+
+def test_each_critic_has_its_own_extract_budget():
+    specs = {s["name"]: s for s in build_subagents(_models(), FakeTavily())}
+    def extract(name: str) -> BaseTool:
+        return next(t for t in specs[name]["tools"] if isinstance(t, BaseTool) and t.name == "extract_page")  # type: ignore[union-attr]
+
+    for _ in range(3):
+        extract("cyber-critic").invoke({"urls": ["https://a.example"]})
+    assert "Full article text." in extract("geopolitical-critic").invoke({"urls": ["https://a.example"]})
 
 
 def test_request_brief():

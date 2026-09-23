@@ -64,17 +64,18 @@ def build_subagents(models: dict[str, Any], tavily: Any, today: date | None = No
                 "tools": [*tools.search_tools(tavily, MAX_SEARCHES), *(OPEN_DATA[t] for t in extra_tools)],
             }
         )
-    agents.append(
-        {
-            "name": "critic",
-            "description": "Independent verifier of ONE dimension's findings and score (name the dimension key). "
-            "Writes /reviews/<key>.md.",
-            "system_prompt": critic_prompt(today),
-            "model": models["critic"],
-            # extract_page only: the critic checks cited pages, it does not search for new evidence.
-            "tools": tools.search_tools(tavily, max_searches=0)[1:],
-        }
-    )
+    for key, (title, *_) in DIMENSIONS.items():
+        # One critic per dimension, each with its own extract budget (a shared tool would share the cap).
+        agents.append(
+            {
+                "name": f"{key}-critic",
+                "description": f"Independent verifier of /findings/{key}.md. Writes /reviews/{key}.md.",
+                "system_prompt": critic_prompt(key, today),
+                "model": models["critic"],
+                # extract_page only: the critic checks cited pages, it does not search for new evidence.
+                "tools": tools.search_tools(tavily, max_searches=0)[1:],
+            }
+        )
     return agents
 
 

@@ -81,7 +81,7 @@ Orchestrator writes /report.md
 **Critic / verifier**
 - Checks every claim in the findings against its cited source (re-fetching the page with `extract_page`).
 - Checks dates against the 24-month window and flags hallucinated or unsupported claims.
-- One critic per dimension, all six in parallel (a single sequential critic took ~3 min).
+- One critic per dimension (`<dimension>-critic`, each with its own extract budget), all six in parallel (a single sequential critic took ~3 min).
 - Output: `reviews/<dimension>.md` with approved / rejected per finding and a suggested score. No rework round: the orchestrator drops rejected findings and applies the suggested scores.
 
 ### Filesystem

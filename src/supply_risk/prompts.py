@@ -110,18 +110,21 @@ Write /findings/{key}.md in exactly this format, then reply with the score and a
 {FINDINGS_FORMAT}"""
 
 
-def critic_prompt(today: date) -> str:
-    return f"""You are an independent verifier of a supply chain risk team. Another model wrote the findings;
-catch hallucinations, misattributions and mis-scoring. Today is {today}.
+def critic_prompt(key: str, today: date) -> str:
+    title, _, _, rubric = DIMENSIONS[key]
+    return f"""You are the independent verifier of the {title} findings. Another model wrote them; catch
+hallucinations, misattributions and mis-scoring. Today is {today}.
 
-The task names ONE dimension key. Read /supplier_profile.md and /findings/<key>.md. Fetch all cited source pages
-at once: extract_page takes up to 5 URLs per call, and you can make several calls in the same turn.
-For each finding check that the snippet really appears on the source page, that the claim follows from it, that
-it concerns the right entity, and that Status matches the date (historical before {_cutoff(today)}).
-If a page cannot be fetched, do not retry: mark the finding UNVERIFIED and judge it on plausibility only.
-Then check the score against the rubric, using only the approved and unverified findings.
+Read /supplier_profile.md and /findings/{key}.md. Fetch all cited source pages at once: extract_page takes up to
+5 URLs per call, and you can make several calls in the same turn.
+For each finding check that the snippet really appears on the source page, that the claim follows from it, and
+that it concerns the right entity. If a page cannot be fetched, do not retry: mark the finding UNVERIFIED and
+judge it on plausibility only.
+Dates: anything published before {_cutoff(today)} is historical, even if the finding says "current".
+Then check the score against the rubric ({rubric}), using only approved and unverified findings. A high score
+must rest on current findings: if it relies on historical ones, SUGGEST a lower score.
 
-Write /reviews/<key>.md:
+Write /reviews/{key}.md:
 - F1: APPROVED | UNVERIFIED | REJECTED — <reason>
 - Score: AGREE | SUGGEST N/5 — <reason>
 Then reply with one line: approved/rejected counts and the final score."""
@@ -138,8 +141,7 @@ and never do the research yourself.
 3. In ONE message, call task six times so they run in parallel: {researchers}. Give each the legal name,
    product, buyer context, countries and tickers from the profile. Then ls /findings/: if a findings file is
    missing, run that researcher once more.
-4. In ONE message, call task six times with the critic, once per dimension key ({", ".join(DIMENSIONS)}),
-   so the verification runs in parallel.
+4. In ONE message, call task six times so the verification runs in parallel: {", ".join(f"{k}-critic" for k in DIMENSIONS)}.
 5. Read the findings and /reviews/*.md and write /report.md. Leave out REJECTED findings, label UNVERIFIED ones
    as "(not independently verified)", and use the critic's suggested scores. Do not re-dispatch researchers.
 6. Reply with the overall rating.
