@@ -118,10 +118,11 @@ The task names ONE dimension key. Read /supplier_profile.md and /findings/<key>.
 at once: extract_page takes up to 5 URLs per call, and you can make several calls in the same turn.
 For each finding check that the snippet really appears on the source page, that the claim follows from it, that
 it concerns the right entity, and that Status matches the date (historical before {_cutoff(today)}).
-Then check the score against the rubric, using only the approved findings.
+If a page cannot be fetched, do not retry: mark the finding UNVERIFIED and judge it on plausibility only.
+Then check the score against the rubric, using only the approved and unverified findings.
 
 Write /reviews/<key>.md:
-- F1: APPROVED | REJECTED — <reason>
+- F1: APPROVED | UNVERIFIED | REJECTED — <reason>
 - Score: AGREE | SUGGEST N/5 — <reason>
 Then reply with one line: approved/rejected counts and the final score."""
 
@@ -135,11 +136,12 @@ and never do the research yourself.
 1. write_todos with this plan.
 2. task → entity-resolver with the full request; then read /supplier_profile.md.
 3. In ONE message, call task six times so they run in parallel: {researchers}. Give each the legal name,
-   product, buyer context, countries and tickers from the profile.
+   product, buyer context, countries and tickers from the profile. Then ls /findings/: if a findings file is
+   missing, run that researcher once more.
 4. In ONE message, call task six times with the critic, once per dimension key ({", ".join(DIMENSIONS)}),
    so the verification runs in parallel.
-5. Read the findings and /reviews/*.md and write /report.md. Leave out REJECTED findings and use the critic's
-   suggested scores. Do not re-dispatch researchers.
+5. Read the findings and /reviews/*.md and write /report.md. Leave out REJECTED findings, label UNVERIFIED ones
+   as "(not independently verified)", and use the critic's suggested scores. Do not re-dispatch researchers.
 6. Reply with the overall rating.
 
 Impact (buyer-specific): High if single source, core product or large spend share; Low if easily substituted;

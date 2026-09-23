@@ -31,9 +31,10 @@ def _get(url: str, params: dict | None = None, headers: dict | None = None) -> h
 # -- web search -------------------------------------------------------------------------------
 
 
-def search_tools(client: Any, max_searches: int) -> list[BaseTool]:
-    """web_search + extract_page for one agent, with its own search cap."""
+def search_tools(client: Any, max_searches: int, max_extracts: int = 3) -> list[BaseTool]:
+    """web_search + extract_page for one agent, each with its own cap so no agent can loop for minutes."""
     used = 0
+    extracts = 0
 
     @tool
     @_safe
@@ -63,9 +64,17 @@ def search_tools(client: Any, max_searches: int) -> list[BaseTool]:
     @tool
     @_safe
     def extract_page(urls: list[str]) -> str:
-        """Fetch the text of up to 5 web pages in one call, to confirm facts and copy exact quotes."""
+        """Fetch the text of up to 5 web pages in one call, to confirm facts and copy exact quotes.
+        You can only call this a few times: pass all the URLs you need at once, and do not retry failed pages."""
+        nonlocal extracts
+        if extracts >= max_extracts:
+            return f"You have used all {max_extracts} extract calls. Finish with the evidence you have."
+        extracts += 1
         data = client.extract(urls[:5], format="markdown")
         pages = [f"URL: {r.get('url')}\n{(r.get('raw_content') or '')[:4000]}" for r in data.get("results", [])]
+        failed = [str(f.get("url", f)) for f in data.get("failed_results", [])]
+        if failed:
+            pages.append("Could not fetch (do not retry): " + ", ".join(failed))
         return "\n\n---\n\n".join(pages) or "Nothing could be extracted."
 
     return [web_search, extract_page]

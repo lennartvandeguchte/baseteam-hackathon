@@ -51,7 +51,7 @@ def build_subagents(models: dict[str, Any], tavily: Any, today: date | None = No
             "description": "Resolves the supplier to a legal entity and writes /supplier_profile.md. Run first.",
             "system_prompt": entity_prompt(today),
             "model": models["entity"],
-            "tools": [tools.gleif_search, *tools.search_tools(tavily, max_searches=6)],
+            "tools": [tools.gleif_search, *tools.search_tools(tavily, max_searches=6, max_extracts=2)],
         }
     ]
     for key, (title, _, extra_tools, _) in DIMENSIONS.items():

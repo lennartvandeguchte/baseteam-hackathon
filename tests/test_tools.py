@@ -38,6 +38,21 @@ def test_extract_page():
     assert "Full article text." in t["extract_page"].invoke({"urls": ["https://news.example/acme"]})
 
 
+def test_extract_page_is_capped_per_agent():
+    t = {x.name: x for x in tools.search_tools(FakeTavily(), max_searches=2, max_extracts=1)}
+    t["extract_page"].invoke({"urls": ["https://a.example"]})
+    assert "used all 1 extract calls" in t["extract_page"].invoke({"urls": ["https://b.example"]})
+
+
+def test_extract_page_reports_failed_urls():
+    class Partial(FakeTavily):
+        def extract(self, urls, **kwargs):
+            return {"results": [], "failed_results": [{"url": u, "error": "blocked"} for u in urls]}
+
+    t = {x.name: x for x in tools.search_tools(Partial(), 2)}
+    assert "do not retry" in t["extract_page"].invoke({"urls": ["https://paywall.example"]})
+
+
 def test_search_errors_are_returned_to_the_agent():
     class Broken(FakeTavily):
         def search(self, query, **kwargs):
