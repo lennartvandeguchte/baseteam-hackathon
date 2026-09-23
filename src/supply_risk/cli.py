@@ -29,7 +29,8 @@ def main(argv: list[str] | None = None) -> None:
     if args.command == "smoke":
         from supply_risk.smoke import CANDIDATES, run_smoke
 
-        print(run_smoke(args.models or CANDIDATES))
+        for line in run_smoke(args.models or CANDIDATES):
+            print(line, flush=True)
         return
 
     from supply_risk.agent import Request, run as run_agent

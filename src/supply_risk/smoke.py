@@ -5,6 +5,7 @@ gpt-oss/vLLM failure), can it make parallel calls, and does it answer after gett
 """
 
 import time
+from typing import Iterator
 
 from langchain_core.messages import HumanMessage, ToolMessage
 from langchain_core.tools import tool
@@ -31,7 +32,8 @@ def lookup_company(name: str, country: str) -> str:
 def smoke_test(model: str) -> dict:
     result: dict = {"model": model}
     try:
-        llm = chat_model(model, temperature=0).bind_tools([lookup_company])
+        # Short timeout, no retries: a slow or unavailable model should fail fast, not stall the whole test.
+        llm = chat_model(model, temperature=0, timeout=90, max_retries=0).bind_tools([lookup_company])
         prompt = HumanMessage("Find the LEI of ASML (Netherlands). Use the tool.")
         start = time.monotonic()
         ai = llm.invoke([prompt])
@@ -49,13 +51,14 @@ def smoke_test(model: str) -> dict:
     return result
 
 
-def run_smoke(models: list[str]) -> str:
-    rows = ["| Model | Tool call | No JSON leak | Parallel calls | Final answer | Latency (s) | Error |", "|---|---|---|---|---|---|---|"]
+def run_smoke(models: list[str]) -> Iterator[str]:
+    """Yields the table line by line, so each model's result is shown as soon as it is known."""
+    yield "| Model | Tool call | No JSON leak | Parallel calls | Final answer | Latency (s) | Error |"
+    yield "|---|---|---|---|---|---|---|"
     for model in models:
         r = smoke_test(model)
         ok = lambda k: "✅" if r.get(k) else "❌"  # noqa: E731
-        rows.append(
+        yield (
             f"| {model} | {ok('tool_call')} | {ok('no_json_leak')} | {r.get('parallel_calls', 0)} | {ok('final_answer')} | "
             f"{r.get('latency_s', '-')} | {r.get('error', '')} |"
         )
-    return "\n".join(rows)

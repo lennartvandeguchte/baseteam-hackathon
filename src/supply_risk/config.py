@@ -31,7 +31,7 @@ def model_id(role: str) -> str:
     return os.getenv(f"SUPPLY_RISK_MODEL_{role.upper()}", MODELS[role])
 
 
-def chat_model(model: str, temperature: float = 0.2) -> ChatOpenAI:
+def chat_model(model: str, temperature: float = 0.2, timeout: float = 180, max_retries: int = 3) -> ChatOpenAI:
     """An open model on Nebius Token Factory via its OpenAI-compatible API."""
     api_key = os.getenv("NEBIUS_API_KEY")
     if not api_key:
@@ -41,6 +41,6 @@ def chat_model(model: str, temperature: float = 0.2) -> ChatOpenAI:
         base_url=os.getenv("NEBIUS_BASE_URL", NEBIUS_BASE_URL),
         api_key=api_key,  # type: ignore[arg-type]
         temperature=temperature,
-        max_retries=3,
-        timeout=180,
+        max_retries=max_retries,
+        timeout=timeout,
     )
