@@ -87,10 +87,9 @@ Work autonomously: never ask questions — pick the best-supported entity and do
 Use gleif_search (LEI, jurisdiction, HQ) and web_search to find: legal name, LEI, parent company, HQ country
 (ISO2), whether it is listed and its Yahoo ticker(s), and its main production sites/countries for the product.
 
-Keep it quick: at most 4 searches. Your job is only done once you have called write_file for
-/supplier_profile.md with sections: Identity, Business, Production footprint, Resolution (confidence
-high/medium/low, rationale, rejected candidates), Sources (URLs). Never put the profile only in your reply.
-After write_file succeeds, reply with a two-line summary."""
+Keep it quick: at most 4 searches. Your final reply IS the profile (it is saved as /supplier_profile.md
+automatically; do not call write_file). Sections: Identity, Business, Production footprint, Resolution
+(confidence high/medium/low, rationale, rejected candidates), Sources (URLs)."""
 
 
 def researcher_prompt(key: str, today: date) -> str:
@@ -108,10 +107,9 @@ historical and weigh less.
 Scoring rubric (1 = low, 5 = severe): {rubric}
 If evidence is thin, do not default to 1; state the uncertainty.
 
-Your job is only done once you have called write_file for /findings/{key}.md — never put the findings only in
-your reply. As soon as you run out of searches, write the file with what you have. Use exactly this format:
-{FINDINGS_FORMAT}
-After write_file succeeds, reply with the score and a 3-line summary."""
+When you are done (or out of searches), your final reply IS the findings document: it is saved as
+/findings/{key}.md automatically, so do not call write_file. Use exactly this format and nothing else:
+{FINDINGS_FORMAT}"""
 
 
 def critic_prompt(key: str, today: date) -> str:
@@ -128,10 +126,9 @@ Dates: anything published before {_cutoff(today)} is historical, even if the fin
 Then check the score against the rubric ({rubric}), using only approved and unverified findings. A high score
 must rest on current findings: if it relies on historical ones, SUGGEST a lower score.
 
-Your job is only done once you have called write_file for /reviews/{key}.md:
+Your final reply IS the review (saved as /reviews/{key}.md automatically; do not call write_file), in this format:
 - F1: APPROVED | UNVERIFIED | REJECTED — <reason>
-- Score: AGREE | SUGGEST N/5 — <reason>
-Then reply with one line: approved/rejected counts and the final score."""
+- Score: AGREE | SUGGEST N/5 — <reason>"""
 
 
 def orchestrator_prompt(today: date) -> str:
@@ -141,10 +138,10 @@ sourced from it and optional buyer context, and must deliver a cited risk report
 and never do the research yourself.
 
 1. write_todos with this plan.
-2. task → entity-resolver with the full request; then read /supplier_profile.md.
+2. task → entity-resolver with the full request. Its reply is saved as /supplier_profile.md.
 3. In ONE message, call task six times so they run in parallel: {researchers}. Give each the legal name,
-   product, buyer context, countries and tickers from the profile. Then ls /findings/: if a findings file is
-   missing, run that researcher once more.
+   product, buyer context, countries and tickers from the profile. Their replies are saved as /findings/<key>.md.
+   Never run a subagent twice.
 4. In ONE message, call task six times so the verification runs in parallel: {", ".join(f"{k}-critic" for k in DIMENSIONS)}.
 5. Read the findings and /reviews/*.md and write /report.md. Leave out REJECTED findings, label UNVERIFIED ones
    as "(not independently verified)", and use the critic's suggested scores. Do not re-dispatch researchers.

@@ -26,8 +26,8 @@ def _call(name: str, args: dict, id: str) -> AIMessage:
     return AIMessage(content="", tool_calls=[{"name": name, "args": args, "id": id, "type": "tool_call"}])
 
 
-def test_subagents_roles_models_and_tools():
-    specs = {s["name"]: s for s in build_subagents(_models(), FakeTavily())}
+def test_subagents_roles_models_and_tools(tmp_path):
+    specs = {s["name"]: s for s in build_subagents(_models(), FakeTavily(), tmp_path)}
     assert list(specs) == ["entity-resolver", *(f"{k}-researcher" for k in DIMENSIONS), *(f"{k}-critic" for k in DIMENSIONS)]
     assert specs["entity-resolver"]["model"].label == "entity"  # type: ignore[union-attr]
     assert specs["cyber-critic"]["model"].label == "critic"  # type: ignore[union-attr]
@@ -39,8 +39,8 @@ def test_subagents_roles_models_and_tools():
     assert names["cyber-critic"] == {"extract_page"}
 
 
-def test_each_critic_has_its_own_extract_budget():
-    specs = {s["name"]: s for s in build_subagents(_models(), FakeTavily())}
+def test_each_critic_has_its_own_extract_budget(tmp_path):
+    specs = {s["name"]: s for s in build_subagents(_models(), FakeTavily(), tmp_path)}
     def extract(name: str) -> BaseTool:
         return next(t for t in specs[name]["tools"] if isinstance(t, BaseTool) and t.name == "extract_page")  # type: ignore[union-attr]
 
@@ -52,6 +52,19 @@ def test_each_critic_has_its_own_extract_budget():
 def test_request_brief():
     brief = Request(supplier="TSMC", product="5nm wafers", buyer="Acme", single_source=True).brief()
     assert "TSMC" in brief and "5nm wafers" in brief and "Acme" in brief and "Single source: yes" in brief
+
+
+def test_subagent_reply_is_saved_when_it_does_not_call_write_file(tmp_path):
+    """Qwen often puts the findings in its final reply instead of calling write_file."""
+    models = _models(
+        orchestrator=[
+            _call("task", {"description": "Resolve the supplier", "subagent_type": "entity-resolver"}, "c1"),
+            AIMessage(content="Done"),
+        ],
+        entity=[AIMessage(content="```markdown\n# Supplier profile\nNexperia B.V.\n```")],
+    )
+    run(Request(supplier="Nexperia", product="chips"), tmp_path, models=models, tavily=FakeTavily())
+    assert (tmp_path / "supplier_profile.md").read_text() == "# Supplier profile\nNexperia B.V.\n"
 
 
 def test_end_to_end_run_writes_files(tmp_path):
@@ -68,4 +81,5 @@ def test_end_to_end_run_writes_files(tmp_path):
     )
     report = run(Request(supplier="Acme", product="widgets"), tmp_path, models=models, tavily=FakeTavily())
     assert report.read_text() == "# Report\n"
-    assert (tmp_path / "supplier_profile.md").exists()
+    # the entity resolver called write_file and then replied "Profile written." — the file must be kept
+    assert (tmp_path / "supplier_profile.md").read_text() == "# Profile"
