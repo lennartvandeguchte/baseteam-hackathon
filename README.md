@@ -15,7 +15,7 @@ orchestrator ─► 6 researchers in parallel ─► /findings/<dimension>.md
 
 | Role | Model | Why |
 |---|---|---|
-| Orchestrator + report writer | `zai-org/GLM-5.3` | Agentic tool use, 1M context holds all findings |
+| Orchestrator + report writer | `moonshotai/Kimi-K3` | Fast agentic tool use (1.1 s/call in the smoke test vs 28.5 s for GLM-5.3), 1M context holds all findings |
 | Entity resolution | `Qwen/Qwen3-235B-A22B-Instruct-2507` | Fast, cheap structured extraction |
 | 6 dimension researchers | `Qwen/Qwen3-235B-A22B-Instruct-2507` | Cheap, reliable tool calling, low-latency MoE for parallel runs |
 | Critic / verifier | `deepseek-ai/DeepSeek-V4-Pro-0813` | Strong reasoning, from a different model family than the writers |

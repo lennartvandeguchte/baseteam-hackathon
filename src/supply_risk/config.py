@@ -11,8 +11,9 @@ from langchain_openai import ChatOpenAI
 NEBIUS_BASE_URL = "https://api.tokenfactory.nebius.com/v1/"
 
 MODELS = {
-    # Planning, delegation and long-context report writing: agentic model with 1M context.
-    "orchestrator": "zai-org/GLM-5.3",
+    # Planning, delegation and long-context report writing: fast agentic model with 1M context.
+    # (GLM-5.3 passed the smoke test too, but took ~28 s per call — too slow for ~20 sequential turns.)
+    "orchestrator": "moonshotai/Kimi-K3",
     # Short structured extraction: fast, cheap instruct model.
     "entity": "Qwen/Qwen3-235B-A22B-Instruct-2507",
     # High-volume tool-calling loops (6 in parallel): cheap, low-latency MoE with reliable tool calls.

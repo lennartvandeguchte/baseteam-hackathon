@@ -6,7 +6,7 @@ An autonomous AI agent that takes a supplier and the product a company relies on
 
 - Hackathon demo that runs end-to-end, architected so it can grow into a real tool
 - Python, LangChain `deepagents`, open models via Nebius Token Factory, Tavily for search
-- Targets per report: < 5 minutes, ~$0.85 LLM cost, ~100 Tavily credits
+- Targets per report: < 5 minutes, ~$1.70 LLM cost, ~100 Tavily credits
 - Fully autonomous — no human-in-the-loop
 
 ## Input
@@ -119,14 +119,15 @@ Each model is chosen for what the task requires. The tool-calling smoke test (`s
 
 | Role | Task demands | Model | Rationale |
 |---|---|---|---|
-| Orchestrator + report writer | Long-horizon planning, delegation via tool calls, holding all findings, coherent long-form writing | `zai-org/GLM-5.3` | Agentic/tool-use-oriented model line; 1M context holds all findings; $1/$4 is acceptable for a low-call-volume role |
+| Orchestrator + report writer | Long-horizon planning, delegation via tool calls, holding all findings, coherent long-form writing | `moonshotai/Kimi-K3` | Agentic model built for tool use; 1M context holds all findings; fast (1.1 s per call in the smoke test). $3/$15 is acceptable for a low-call-volume role |
 | Entity resolution | Short, precise structured extraction | `Qwen/Qwen3-235B-A22B-Instruct-2507` | Fast non-thinking instruct model, strong structured output, cheap; the task is lookup/extraction, not deep reasoning |
 | 6 dimension researchers | High-volume search→read→note loops over noisy text; ~70% of tokens; reliable tool calling | `Qwen/Qwen3-235B-A22B-Instruct-2507` | $0.20/$0.60, tool support confirmed on Nebius; MoE with 22B active parameters keeps latency low across 6 parallel agents; 262K context is ample per dimension |
-| Critic / verifier | Careful claim-vs-source reasoning; must not share the writers' blind spots | `deepseek-ai/DeepSeek-V4-Pro-0813` | Strong reasoning, and a **different model family** from both the researchers (Qwen) and the writer (GLM). This avoids self-preference bias and decorrelates errors |
+| Critic / verifier | Careful claim-vs-source reasoning; must not share the writers' blind spots | `deepseek-ai/DeepSeek-V4-Pro-0813` | Strong reasoning, and a **different model family** from both the researchers (Qwen) and the writer (Kimi). This avoids self-preference bias and decorrelates errors |
 
 **Excluded (with reasons, for the pitch):**
 - `openai/gpt-oss-120b`: documented tool-calling bugs on vLLM-style serving (tool calls land in `content`, parallel calls regress). Too risky for agent loops.
-- `moonshotai/Kimi-K3`: strong agentic model but ~4× the cost of GLM-5.3 with no clear advantage for our roles. Kept as fallback orchestrator.
+- `zai-org/GLM-5.3`: the original orchestrator pick. It passed the smoke test but took 28.5 s per call (Kimi-K3: 1.1 s); with ~20 sequential orchestrator turns that breaks the 5-minute target. Kept as a cheaper fallback.
+- `openai/gpt-oss-120b` (smoke test): made only 1 of 2 parallel calls and gave no correct answer after the tool result.
 - `DeepSeek-V4-Flash`, `GLM-5.3-Flash`: cheaper backup candidates for the researcher role (swap via `SUPPLY_RISK_MODEL_RESEARCHER`).
 
 **Estimated cost per report:**
@@ -134,9 +135,9 @@ Each model is chosen for what the task requires. The tool-calling smoke test (`s
 | Role | Tokens (in / out) | Cost |
 |---|---|---|
 | Researchers | ~900K / 60K | ~$0.22 |
-| Orchestrator | ~300K / 20K | ~$0.38 |
+| Orchestrator | ~300K / 20K | ~$1.20 |
 | Critic | ~200K / 10K | ~$0.24 |
-| **Total** | | **~$0.85** |
+| **Total** | | **~$1.70** |
 
 **Caveats:**
 - Prices and context sizes come from third-party listings. Verify them against the Nebius catalogue during setup.
