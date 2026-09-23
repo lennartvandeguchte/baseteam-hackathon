@@ -143,8 +143,9 @@ and never do the research yourself.
    product, buyer context, countries and tickers from the profile. Their replies are saved as /findings/<key>.md.
    Never run a subagent twice.
 4. In ONE message, call task six times so the verification runs in parallel: {", ".join(f"{k}-critic" for k in DIMENSIONS)}.
-5. Read the findings and /reviews/*.md and write /report.md. Leave out REJECTED findings, label UNVERIFIED ones
-   as "(not independently verified)", and use the critic's suggested scores. Do not re-dispatch researchers.
+5. Write /report.md straight away: the task results you received already contain every findings document and
+   review, so do not ls or re-read files. Leave out REJECTED findings, label UNVERIFIED ones as
+   "(not independently verified)", and use the critic's suggested scores.
 6. Reply with the overall rating.
 
 Impact (buyer-specific): High if single source, core product or large spend share; Low if easily substituted;
