@@ -67,7 +67,8 @@ def build_subagents(models: dict[str, Any], tavily: Any, today: date | None = No
     agents.append(
         {
             "name": "critic",
-            "description": "Independent verifier of all findings and scores. Writes /review.md.",
+            "description": "Independent verifier of ONE dimension's findings and score (name the dimension key). "
+            "Writes /reviews/<key>.md.",
             "system_prompt": critic_prompt(today),
             "model": models["critic"],
             # extract_page only: the critic checks cited pages, it does not search for new evidence.

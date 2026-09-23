@@ -10,7 +10,7 @@ Nebius Token Factory. See [PLAN.md](PLAN.md) for the design decisions.
 ```
 entity-resolver ─► /supplier_profile.md
 orchestrator ─► 6 researchers in parallel ─► /findings/<dimension>.md
-             ─► critic ─► /review.md ─► (one rework round) ─► /report.md
+             ─► 6 critics in parallel ─► /reviews/<dimension>.md ─► /report.md
 ```
 
 | Role | Model | Why |
@@ -24,7 +24,7 @@ orchestrator ─► 6 researchers in parallel ─► /findings/<dimension>.md
 against a rubric. Buyer context (single source, criticality) is applied separately as impact.
 
 **Tools:**
-- Tavily web search, capped at 10 searches per researcher, and page extraction
+- Tavily web search, capped at 6 searches per researcher, and page extraction
 - GLEIF (legal entity)
 - OpenSanctions (optional API key)
 - World Bank governance indicators
@@ -72,7 +72,7 @@ The output goes to `runs/<supplier>-<timestamp>/`:
 - `report.md`
 - `supplier_profile.md`
 - `findings/*.md`
-- `review.md`
+- `reviews/*.md`
 
 ## Tests
 

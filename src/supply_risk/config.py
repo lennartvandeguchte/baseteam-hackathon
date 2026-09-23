@@ -22,7 +22,7 @@ MODELS = {
     "critic": "deepseek-ai/DeepSeek-V4-Pro-0813",
 }
 
-MAX_SEARCHES = int(os.getenv("SUPPLY_RISK_MAX_SEARCHES", "10"))
+MAX_SEARCHES = int(os.getenv("SUPPLY_RISK_MAX_SEARCHES", "6"))
 LOOKBACK_MONTHS = 24
 # Wikidata/SEC-style APIs reject requests without a contact URL in the User-Agent.
 USER_AGENT = os.getenv("SUPPLY_RISK_USER_AGENT", "supply-risk-agent/0.1 (https://example.org/supply-risk; hackathon prototype)")

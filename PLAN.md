@@ -54,7 +54,7 @@ Orchestrator (plans via write_todos)
   └─► cyber-researcher       ──► /findings/cyber.md
   │
   ▼
-Critic / verifier ──► /review.md  (unsupported claims sent back or dropped)
+Critic / verifier × 6, in parallel ──► /reviews/<dimension>.md  (unsupported claims dropped)
   │
   ▼
 Orchestrator writes /report.md
@@ -75,17 +75,18 @@ Orchestrator writes /report.md
 
 **Dimension researchers (6 subagents)**
 - Each has its own system prompt, tool set and scoring rubric.
-- Hard cap of 10 Tavily searches each.
+- Hard cap of 6 Tavily searches each.
 - Writes `findings/<dimension>.md` with findings, evidence and a 1–5 score.
 
 **Critic / verifier**
 - Checks every claim in the findings against its cited source (re-fetching the page with `extract_page`).
 - Checks dates against the 24-month window and flags hallucinated or unsupported claims.
-- Output: `review.md` with approved / rejected / needs-revision per claim.
+- One critic per dimension, all six in parallel (a single sequential critic took ~3 min).
+- Output: `reviews/<dimension>.md` with approved / rejected per finding and a suggested score. No rework round: the orchestrator drops rejected findings and applies the suggested scores.
 
 ### Filesystem
 
-Agents write real files into `runs/<supplier>-<timestamp>/` (deepagents `FilesystemBackend`). The output files are `supplier_profile.md`, `findings/*.md`, `review.md` and `report.md`. The final output format and UI will be decided later; for now the deliverable is `report.md` plus the findings files.
+Agents write real files into `runs/<supplier>-<timestamp>/` (deepagents `FilesystemBackend`). The output files are `supplier_profile.md`, `findings/*.md`, `reviews/*.md` and `report.md`. The final output format and UI will be decided later; for now the deliverable is `report.md` plus the findings files.
 
 ## Data sources
 
@@ -150,7 +151,7 @@ Each model is chosen for what the task requires. The tool-calling smoke test (`s
 
 - ~60 searches per report; ~100 credits with the occasional advanced search or extract. That is roughly 80 full reports, enough for development, eval and demo.
 - `search_depth="basic"` by default; `advanced` and page extraction only for key sources.
-- Hard cap of 10 searches per researcher (6 for entity resolution).
+- Hard cap of 6 searches per researcher and for entity resolution.
 
 ## Evaluation
 

@@ -63,9 +63,9 @@ def search_tools(client: Any, max_searches: int) -> list[BaseTool]:
     @tool
     @_safe
     def extract_page(urls: list[str]) -> str:
-        """Fetch the full text of up to 3 web pages, to confirm facts and copy exact quotes."""
-        data = client.extract(urls[:3], format="markdown")
-        pages = [f"URL: {r.get('url')}\n{(r.get('raw_content') or '')[:6000]}" for r in data.get("results", [])]
+        """Fetch the text of up to 5 web pages in one call, to confirm facts and copy exact quotes."""
+        data = client.extract(urls[:5], format="markdown")
+        pages = [f"URL: {r.get('url')}\n{(r.get('raw_content') or '')[:4000]}" for r in data.get("results", [])]
         return "\n\n---\n\n".join(pages) or "Nothing could be extracted."
 
     return [web_search, extract_page]

@@ -111,20 +111,19 @@ Write /findings/{key}.md in exactly this format, then reply with the score and a
 
 
 def critic_prompt(today: date) -> str:
-    return f"""You are the independent verifier of a supply chain risk team. Other models wrote the findings;
-catch hallucinations, misattributions and mis-scored dimensions. Today is {today}.
+    return f"""You are an independent verifier of a supply chain risk team. Another model wrote the findings;
+catch hallucinations, misattributions and mis-scoring. Today is {today}.
 
-Read /supplier_profile.md and every file in /findings/. For each finding check that the snippet really appears on
-the source page (use extract_page on the sources), that the claim follows from the snippet, that it concerns the
-right entity, and that Status matches the date (historical before {_cutoff(today)}). Check each score against the
-approved findings.
+The task names ONE dimension key. Read /supplier_profile.md and /findings/<key>.md. Fetch all cited source pages
+at once: extract_page takes up to 5 URLs per call, and you can make several calls in the same turn.
+For each finding check that the snippet really appears on the source page, that the claim follows from it, that
+it concerns the right entity, and that Status matches the date (historical before {_cutoff(today)}).
+Then check the score against the rubric, using only the approved findings.
 
-Write /review.md with one section per dimension key:
-## <dimension key>
-- F1: APPROVED | REJECTED | REVISE — <reason>
+Write /reviews/<key>.md:
+- F1: APPROVED | REJECTED — <reason>
 - Score: AGREE | SUGGEST N/5 — <reason>
-- Needs rework: yes | no
-Then reply with a short summary."""
+Then reply with one line: approved/rejected counts and the final score."""
 
 
 def orchestrator_prompt(today: date) -> str:
@@ -137,9 +136,10 @@ and never do the research yourself.
 2. task → entity-resolver with the full request; then read /supplier_profile.md.
 3. In ONE message, call task six times so they run in parallel: {researchers}. Give each the legal name,
    product, buyer context, countries and tickers from the profile.
-4. task → critic; then read /review.md. Re-dispatch researchers marked "Needs rework: yes" once, with the
-   critic's comments.
-5. Read the findings and write /report.md (exclude REJECTED findings; prefer the critic's suggested scores).
+4. In ONE message, call task six times with the critic, once per dimension key ({", ".join(DIMENSIONS)}),
+   so the verification runs in parallel.
+5. Read the findings and /reviews/*.md and write /report.md. Leave out REJECTED findings and use the critic's
+   suggested scores. Do not re-dispatch researchers.
 6. Reply with the overall rating.
 
 Impact (buyer-specific): High if single source, core product or large spend share; Low if easily substituted;
