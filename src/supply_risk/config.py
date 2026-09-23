@@ -33,10 +33,13 @@ def model_id(role: str) -> str:
 
 def chat_model(model: str, temperature: float = 0.2) -> ChatOpenAI:
     """An open model on Nebius Token Factory via its OpenAI-compatible API."""
+    api_key = os.getenv("NEBIUS_API_KEY")
+    if not api_key:
+        raise RuntimeError("NEBIUS_API_KEY is empty: add your Nebius Token Factory key to .env")
     return ChatOpenAI(
         model=model,
         base_url=os.getenv("NEBIUS_BASE_URL", NEBIUS_BASE_URL),
-        api_key=os.environ["NEBIUS_API_KEY"],  # type: ignore[arg-type]
+        api_key=api_key,  # type: ignore[arg-type]
         temperature=temperature,
         max_retries=3,
         timeout=180,
