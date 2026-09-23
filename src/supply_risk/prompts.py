@@ -87,8 +87,10 @@ Work autonomously: never ask questions — pick the best-supported entity and do
 Use gleif_search (LEI, jurisdiction, HQ) and web_search to find: legal name, LEI, parent company, HQ country
 (ISO2), whether it is listed and its Yahoo ticker(s), and its main production sites/countries for the product.
 
-Write /supplier_profile.md with sections: Identity, Business, Production footprint, Resolution (confidence
-high/medium/low, rationale, rejected candidates), Sources (URLs). Then reply with a two-line summary."""
+Keep it quick: at most 4 searches. Your job is only done once you have called write_file for
+/supplier_profile.md with sections: Identity, Business, Production footprint, Resolution (confidence
+high/medium/low, rationale, rejected candidates), Sources (URLs). Never put the profile only in your reply.
+After write_file succeeds, reply with a two-line summary."""
 
 
 def researcher_prompt(key: str, today: date) -> str:
@@ -106,8 +108,10 @@ historical and weigh less.
 Scoring rubric (1 = low, 5 = severe): {rubric}
 If evidence is thin, do not default to 1; state the uncertainty.
 
-Write /findings/{key}.md in exactly this format, then reply with the score and a 3-line summary:
-{FINDINGS_FORMAT}"""
+Your job is only done once you have called write_file for /findings/{key}.md — never put the findings only in
+your reply. As soon as you run out of searches, write the file with what you have. Use exactly this format:
+{FINDINGS_FORMAT}
+After write_file succeeds, reply with the score and a 3-line summary."""
 
 
 def critic_prompt(key: str, today: date) -> str:
@@ -124,7 +128,7 @@ Dates: anything published before {_cutoff(today)} is historical, even if the fin
 Then check the score against the rubric ({rubric}), using only approved and unverified findings. A high score
 must rest on current findings: if it relies on historical ones, SUGGEST a lower score.
 
-Write /reviews/{key}.md:
+Your job is only done once you have called write_file for /reviews/{key}.md:
 - F1: APPROVED | UNVERIFIED | REJECTED — <reason>
 - Score: AGREE | SUGGEST N/5 — <reason>
 Then reply with one line: approved/rejected counts and the final score."""
