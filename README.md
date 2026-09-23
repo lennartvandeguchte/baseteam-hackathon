@@ -41,6 +41,8 @@ against a rubric. Buyer context (single source, criticality) is applied separate
 | `src/supply_risk/agent.py` | deepagents wiring and `run()` |
 | `src/supply_risk/smoke.py` | Tool-calling smoke test of candidate models |
 | `src/supply_risk/cli.py` | Command line |
+| `src/supply_risk/api.py` | HTTP API (start a run, poll its status) |
+| `modal_app.py` | Modal deployment of the API and the background job |
 
 ## Usage
 
@@ -73,6 +75,28 @@ The output goes to `runs/<supplier>-<timestamp>/`:
 - `supplier_profile.md`
 - `findings/*.md`
 - `reviews/*.md`
+
+## Deploy on Modal (HTTP API for a website)
+
+`modal_app.py` serves `src/supply_risk/api.py` on Modal. Each analysis runs as a background job.
+
+- `POST /runs` takes the same fields as the CLI (`supplier`, `product`, `buyer`, `single_source`, `used_in`,
+  `country`) and returns `{"run_id": ...}`.
+- `GET /runs/{run_id}` returns `{status: running|done|failed, steps, report, error}`.
+
+Every request needs an `x-api-token` header. Run folders are kept in the Modal volume `supply-risk-runs`.
+
+```bash
+uv run modal setup
+```
+
+```bash
+uv run modal secret create supply-risk NEBIUS_API_KEY=... TAVILY_API_KEY=... API_TOKEN=$(openssl rand -hex 24)
+```
+
+```bash
+uv run modal deploy modal_app.py
+```
 
 ## Tests
 

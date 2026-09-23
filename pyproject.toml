@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "deepagents>=0.7.18",
+    "fastapi>=0.141.1",
     "httpx>=0.28.1",
     "langchain-openai>=1.6.4",
     "pydantic>=2.13.5",
@@ -26,6 +27,7 @@ packages = ["src/supply_risk"]
 
 [dependency-groups]
 dev = [
+    "modal>=1.5.5",
     "pyright>=1.1.414",
     "pytest>=9.1.1",
     "respx>=0.23.1",
